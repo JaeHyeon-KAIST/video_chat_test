@@ -1,0 +1,7 @@
+/* 메인 애플리케이션 컨테이너 */
+.app-container {
+  min-height: 100vh;
+  background-color: #f3f4f6;
+  display: flex;
+  font-family: Arial, sans-serif;
+}
