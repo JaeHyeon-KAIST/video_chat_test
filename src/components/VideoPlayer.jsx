@@ -32,7 +32,9 @@ const VideoPlayer = ({
         <div className={styles.container}>
           {videoUrl ? (
             <video
+              key={videoUrl}
               ref={videoRef}
+              src={videoUrl}
               className={styles.player}
               onPlay={onVideoPlay}
               onPause={onVideoPause}
@@ -40,7 +42,6 @@ const VideoPlayer = ({
               onSeeked={onVideoSeeked}
               controls
             >
-              <source src={videoUrl} type={videoFile?.type} />
               비디오를 지원하지 않는 브라우저입니다.
             </video>
           ) : (

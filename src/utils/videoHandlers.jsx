@@ -176,14 +176,38 @@ export const createVideoPlayHandler = (setIsPlaying) => {
 };
 
 // 파일 업로드 핸들러
-export const createFileUploadHandler = (setVideoFile, setVideoUrl, setVideoId, setIsPlaying) => {
+export const createFileUploadHandler = (
+  setVideoFile,
+  setVideoUrl,
+  setVideoId,
+  setIsPlaying,
+  setChatRooms,
+  setCurrentChatRoomId,
+  videoUrl,
+  videoRef
+) => {
   return async (event) => {
     const file = event.target.files[0];
     if (file && file.type.startsWith('video/')) {
+      // 기존 URL이 있다면 메모리에서 해제
+      if (videoUrl) {
+        URL.revokeObjectURL(videoUrl);
+        console.log('기존 비디오 URL 해제됨');
+      }
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+        console.log('기존 비디오 정지됨');
+      }
+
       setVideoFile(file);
       const url = URL.createObjectURL(file);
       setVideoUrl(url);
       setIsPlaying(false);
+
+      setChatRooms([]);
+      setCurrentChatRoomId(null);
+      setVideoId(null);
 
       try {
         const title = file.name || 'untitled';

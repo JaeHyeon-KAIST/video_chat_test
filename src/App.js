@@ -51,7 +51,16 @@ function App() {
     setCurrentChatRoomId
   );
 
-  const handleFileUpload = createFileUploadHandler(setVideoFile, setVideoUrl, setVideoId, setIsPlaying);
+  const handleFileUpload = createFileUploadHandler(
+    setVideoFile,
+    setVideoUrl,
+    setVideoId,
+    setIsPlaying,
+    setChatRooms,
+    setCurrentChatRoomId,
+    videoUrl,
+    videoRef
+  );
 
   const handleUploadClick = createUploadClickHandler(fileInputRef);
 
