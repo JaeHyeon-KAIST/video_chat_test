@@ -4,6 +4,7 @@ import ChatSection from './components/ChatSection';
 import ChatRoomList from './components/ChatRoomList';
 import ApiKeyModal from './components/ApiKeyModal';
 import IntroSection from './components/IntroSection';
+import SearchModal from './components/SearchModal';
 import { getCurrentChatRoom } from './utils/chatRoomManager';
 import {
   createVideoToggleHandler,
@@ -24,11 +25,13 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoFile, setVideoFile] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
+  const [videoId, setVideoId] = useState(null);
   const [apiKey, setApiKey] = useState('');
   const [isApiKeySet, setIsApiKeySet] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showApiModal, setShowApiModal] = useState(false);
   const [showChatRoomList, setShowChatRoomList] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
 
   // refs
   const videoRef = useRef(null);
@@ -38,6 +41,7 @@ function App() {
   const handleVideoToggle = createVideoToggleHandler(
     videoRef,
     videoUrl,
+    videoId,
     isPlaying,
     setIsPlaying,
     chatRooms,
@@ -45,7 +49,7 @@ function App() {
     setCurrentChatRoomId
   );
 
-  const handleFileUpload = createFileUploadHandler(setVideoFile, setVideoUrl, setIsPlaying);
+  const handleFileUpload = createFileUploadHandler(setVideoFile, setVideoUrl, setVideoId, setIsPlaying);
 
   const handleUploadClick = createUploadClickHandler(fileInputRef);
 
@@ -54,6 +58,7 @@ function App() {
   const handleVideoPause = createVideoPauseHandler(
     videoRef,
     videoUrl,
+    videoId,
     setIsPlaying,
     chatRooms,
     setChatRooms,
@@ -70,6 +75,7 @@ function App() {
     isApiKeySet,
     apiKey,
     videoFile,
+    videoId,
     setIsLoading
   );
 
@@ -120,6 +126,7 @@ function App() {
             onKeyPress={handleKeyPress}
             onShowApiModal={() => setShowApiModal(true)}
             onShowChatRoomList={() => setShowChatRoomList(true)}
+            onShowSearchModal={() => setShowSearchModal(true)}
           />
           {showChatRoomList && (
             <ChatRoomList
@@ -143,6 +150,8 @@ function App() {
           onClose={() => setShowApiModal(false)}
         />
       )}
+
+      {showSearchModal && <SearchModal onClose={() => setShowSearchModal(false)} />}
     </div>
   );
 }

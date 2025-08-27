@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Send, Key, MessageSquare } from 'lucide-react';
+import { Send, Key, MessageSquare, Search } from 'lucide-react';
 import MessageList from './MessageList';
 import LoadingIndicator from './LoadingIndicator';
 import { formatVideoTime } from '../utils/chatRoomManager';
@@ -16,6 +16,7 @@ const ChatSection = ({
   onKeyPress,
   onShowApiModal,
   onShowChatRoomList,
+  onShowSearchModal,
 }) => {
   return (
     <div className={styles.section}>
@@ -32,11 +33,16 @@ const ChatSection = ({
           </div>
           <p className={styles.status}>{isApiKeySet ? '✅ OpenAI 연결됨' : '❌ API 키 필요'}</p>
         </div>
-        {!isApiKeySet && (
-          <button onClick={onShowApiModal} className={styles.apiButton} title='API 키 설정'>
-            <Key size={20} />
+        <div className={styles.headerButtons}>
+          <button onClick={onShowSearchModal} className={styles.searchButton} title='통합 검색'>
+            <Search size={20} />
           </button>
-        )}
+          {!isApiKeySet && (
+            <button onClick={onShowApiModal} className={styles.apiButton} title='API 키 설정'>
+              <Key size={20} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className={styles.messagesArea}>
@@ -107,6 +113,7 @@ ChatSection.propTypes = {
   onKeyPress: PropTypes.func.isRequired,
   onShowApiModal: PropTypes.func.isRequired,
   onShowChatRoomList: PropTypes.func.isRequired,
+  onShowSearchModal: PropTypes.func.isRequired,
 };
 
 export default ChatSection;

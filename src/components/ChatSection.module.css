@@ -50,6 +50,30 @@
   font-weight: 600;
 }
 
+.headerButtons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.searchButton {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.searchButton:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
 .status {
   font-size: 14px;
   opacity: 0.9;

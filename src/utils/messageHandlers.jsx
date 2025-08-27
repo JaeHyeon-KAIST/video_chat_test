@@ -1,5 +1,7 @@
 import { callOpenAI } from './openai';
 import { getCurrentChatRoom, addMessageToChatRoom } from './chatRoomManager';
+import { saveChatRoom } from '../api/chat';
+import { saveConversation } from '../api/conversation';
 
 // 메시지 전송 핸들러
 export const createSendMessageHandler = (
@@ -11,6 +13,7 @@ export const createSendMessageHandler = (
   isApiKeySet,
   apiKey,
   videoFile,
+  videoId,
   setIsLoading
 ) => {
   return async () => {
@@ -30,8 +33,20 @@ export const createSendMessageHandler = (
       timestamp: new Date(),
     };
 
+    const roomToSaveAfterUser = {
+      ...currentRoom,
+      messages: [...currentRoom.messages, newMessage],
+    };
+
     // 현재 채팅방에 사용자 메시지 추가
     setChatRooms((prev) => addMessageToChatRoom(prev, currentChatRoomId, newMessage));
+
+    try {
+      await saveChatRoom(roomToSaveAfterUser, videoId);
+      console.log('Chat room saved after user message');
+    } catch (error) {
+      console.error('Failed to save chat room after user message:', error);
+    }
 
     const currentMessage = inputMessage;
     setInputMessage('');
@@ -49,6 +64,29 @@ export const createSendMessageHandler = (
         };
 
         setChatRooms((prev) => addMessageToChatRoom(prev, currentChatRoomId, responseMessage));
+
+        const roomToSaveAfterAI = {
+          ...roomToSaveAfterUser,
+          messages: [...roomToSaveAfterUser.messages, responseMessage],
+        };
+        try {
+          await saveChatRoom(roomToSaveAfterAI, videoId);
+          console.log('Chat room saved after AI message');
+        } catch (error) {
+          console.error('Failed to save chat room to backend:', error);
+        }
+
+        try {
+          await saveConversation(
+            currentMessage, // question
+            aiResponse, // answer
+            currentRoom.capturedFrame, // question_image
+            currentRoom.videoCurrentTime // timestamp
+          );
+          console.log('✅ Conversation saved successfully - now searchable!');
+        } catch (error) {
+          console.error('❌ Failed to save conversation to backend:', error);
+        }
       } catch (error) {
         const errorMessage = {
           id: currentRoom.messages.length + 2,
