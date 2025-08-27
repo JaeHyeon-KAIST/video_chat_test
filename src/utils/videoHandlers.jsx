@@ -9,56 +9,6 @@ let isUserSeeking = false;
 let pauseTimeout = null;
 let lastPauseTime = 0;
 
-// 비디오 재생/일시정지 핸들러
-export const createVideoToggleHandler = (
-  videoRef,
-  videoUrl,
-  videoId,
-  isPlaying,
-  setIsPlaying,
-  chatRooms,
-  setChatRooms,
-  setCurrentChatRoomId
-) => {
-  return async () => {
-    if (videoRef.current && videoUrl) {
-      if (isPlaying) {
-        videoRef.current.pause();
-        // 비디오가 일시정지될 때 채팅방 찾기 또는 생성
-        const frameData = captureVideoFrame(videoRef, videoUrl);
-        if (frameData) {
-          const frameTime = new Date();
-          const videoCurrentTime = videoRef.current.currentTime;
-
-          const { room, isNew } = findOrCreateChatRoom(chatRooms, frameData, frameTime, videoCurrentTime);
-
-          if (isNew) {
-            // 새 채팅방 생성
-            setChatRooms((prev) => [...prev, room]);
-            console.log('새 채팅방 생성 - 프레임 캡처 완료:', Math.round(frameData.length / 1024), 'KB');
-
-            if (videoId) {
-              try {
-                await saveChatRoom(room, videoId);
-              } catch (error) {
-                console.error('Failed to save new chat room to backend:', error);
-              }
-            }
-          } else {
-            console.log('기존 채팅방으로 이동:', room.name);
-          }
-
-          // 해당 채팅방으로 이동
-          setCurrentChatRoomId(room.id);
-        }
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-};
-
 // 수동 일시정지 처리 함수
 const handleManualPause = async (videoRef, videoUrl, videoId, chatRooms, setChatRooms, setCurrentChatRoomId) => {
   const frameData = captureVideoFrame(videoRef, videoUrl);
@@ -85,6 +35,31 @@ const handleManualPause = async (videoRef, videoUrl, videoId, chatRooms, setChat
 
     setCurrentChatRoomId(room.id);
   }
+};
+
+// 비디오 재생/일시정지 핸들러
+export const createVideoToggleHandler = (
+  videoRef,
+  videoUrl,
+  videoId,
+  isPlaying,
+  setIsPlaying,
+  chatRooms,
+  setChatRooms,
+  setCurrentChatRoomId
+) => {
+  return async () => {
+    if (videoRef.current && videoUrl) {
+      if (isPlaying) {
+        videoRef.current.pause();
+        // 비디오가 일시정지될 때 채팅방 찾기 또는 생성
+        await handleManualPause(videoRef, videoUrl, videoId, chatRooms, setChatRooms, setCurrentChatRoomId);
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
 };
 
 // 비디오 seeking 감지 핸들러
