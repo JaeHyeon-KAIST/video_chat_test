@@ -11,6 +11,8 @@ const VideoPlayer = ({
   onVideoToggle,
   onVideoPlay,
   onVideoPause,
+  onVideoSeeking,
+  onVideoSeeked,
   onFileUpload,
   onUploadClick,
 }) => {
@@ -29,7 +31,15 @@ const VideoPlayer = ({
 
         <div className={styles.container}>
           {videoUrl ? (
-            <video ref={videoRef} className={styles.player} onPlay={onVideoPlay} onPause={onVideoPause} controls>
+            <video
+              ref={videoRef}
+              className={styles.player}
+              onPlay={onVideoPlay}
+              onPause={onVideoPause}
+              onSeeking={onVideoSeeking}
+              onSeeked={onVideoSeeked}
+              controls
+            >
               <source src={videoUrl} type={videoFile?.type} />
               비디오를 지원하지 않는 브라우저입니다.
             </video>
@@ -79,6 +89,8 @@ VideoPlayer.propTypes = {
   onVideoToggle: PropTypes.func.isRequired,
   onVideoPlay: PropTypes.func.isRequired,
   onVideoPause: PropTypes.func.isRequired,
+  onVideoSeeking: PropTypes.func.isRequired,
+  onVideoSeeked: PropTypes.func.isRequired,
   onFileUpload: PropTypes.func.isRequired,
   onUploadClick: PropTypes.func.isRequired,
 };

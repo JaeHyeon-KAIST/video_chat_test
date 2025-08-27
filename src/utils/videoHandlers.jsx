@@ -3,6 +3,12 @@ import { findOrCreateChatRoom } from './chatRoomManager';
 import { uploadVideo } from '../api/video';
 import { saveChatRoom } from '../api/chat';
 
+// 사용자 의도를 구분하기 위한 변수들
+let lastSeekTime = 0;
+let isUserSeeking = false;
+let pauseTimeout = null;
+let lastPauseTime = 0;
+
 // 비디오 재생/일시정지 핸들러
 export const createVideoToggleHandler = (
   videoRef,
@@ -53,6 +59,63 @@ export const createVideoToggleHandler = (
   };
 };
 
+// 수동 일시정지 처리 함수
+const handleManualPause = async (videoRef, videoUrl, videoId, chatRooms, setChatRooms, setCurrentChatRoomId) => {
+  const frameData = captureVideoFrame(videoRef, videoUrl);
+  if (frameData) {
+    const frameTime = new Date();
+    const videoCurrentTime = videoRef.current.currentTime;
+
+    const { room, isNew } = findOrCreateChatRoom(chatRooms, frameData, frameTime, videoCurrentTime);
+
+    if (isNew) {
+      setChatRooms((prev) => [...prev, room]);
+      console.log('새 채팅방 생성 - 프레임 캡처 완료:', Math.round(frameData.length / 1024), 'KB');
+
+      if (videoId) {
+        try {
+          await saveChatRoom(room, videoId);
+        } catch (error) {
+          console.error('Failed to save new chat room to backend:', error);
+        }
+      }
+    } else {
+      console.log('기존 채팅방으로 이동:', room.name);
+    }
+
+    setCurrentChatRoomId(room.id);
+  }
+};
+
+// 비디오 seeking 감지 핸들러
+export const createVideoSeekingHandler = () => {
+  return () => {
+    isUserSeeking = true;
+    lastSeekTime = Date.now();
+    console.log('🔍 Seeking 시작됨');
+
+    // 기존 pause timeout 취소
+    if (pauseTimeout) {
+      clearTimeout(pauseTimeout);
+      pauseTimeout = null;
+      console.log('⏸️ Pause timeout 취소됨 (seeking 중)');
+    }
+  };
+};
+
+// 비디오 seeked 감지 핸들러
+export const createVideoSeekedHandler = () => {
+  return () => {
+    console.log('🎯 Seeking 완료됨');
+
+    // seeking이 끝난 후 충분한 시간 대기
+    setTimeout(() => {
+      isUserSeeking = false;
+      console.log('✅ Seeking 플래그 해제됨');
+    }, 200);
+  };
+};
+
 // 비디오 일시정지 핸들러 (비디오 컨트롤에서 직접 호출)
 export const createVideoPauseHandler = (
   videoRef,
@@ -61,38 +124,42 @@ export const createVideoPauseHandler = (
   setIsPlaying,
   chatRooms,
   setChatRooms,
-  setCurrentChatRoomId,
-  setShowChatRoomList
+  setCurrentChatRoomId
 ) => {
   return async () => {
     setIsPlaying(false);
-    // 일시정지 시 채팅방 생성
-    if (videoRef.current && videoUrl) {
-      const frameData = captureVideoFrame(videoRef, videoUrl);
-      if (frameData) {
-        const frameTime = new Date();
-        const videoCurrentTime = videoRef.current.currentTime;
 
-        const { room, isNew } = findOrCreateChatRoom(chatRooms, frameData, frameTime, videoCurrentTime);
+    const now = Date.now();
 
-        if (isNew) {
-          setChatRooms((prev) => [...prev, room]);
-          console.log('새 채팅방 생성 - 프레임 캡처 완료:', Math.round(frameData.length / 1024), 'KB');
-
-          try {
-            await saveChatRoom(room, videoId);
-          } catch (error) {
-            console.error('Failed to save new chat room to backend:', error);
-          }
-        } else {
-          console.log('기존 채팅방으로 이동:', room.name);
-        }
-
-        setCurrentChatRoomId(room.id);
-        // 채팅방 목록 모달이 열려있다면 닫기
-        setShowChatRoomList(false);
-      }
+    // seeking 중이거나 최근에 seek했다면 채팅방 생성하지 않음
+    const timeSinceSeek = now - lastSeekTime;
+    if (isUserSeeking || timeSinceSeek < 500) {
+      console.log('Seeking으로 인한 일시정지 - 채팅방 생성 안함');
+      return;
     }
+
+    // 너무 빠른 연속 일시정지 방지 (1초 이내)
+    const timeSinceLastPause = now - lastPauseTime;
+    if (timeSinceLastPause < 1000) {
+      console.log('연속 일시정지 방지 - 채팅방 생성 안함');
+      return;
+    }
+
+    lastPauseTime = now;
+
+    // 기존 timeout 제거
+    if (pauseTimeout) {
+      clearTimeout(pauseTimeout);
+    }
+
+    // 약간의 지연 후 채팅방 생성 (빠른 재생/일시정지 방지)
+    pauseTimeout = setTimeout(async () => {
+      if (videoRef.current && videoRef.current.paused && !isUserSeeking) {
+        console.log('✅ 의도적인 일시정지 감지 - 채팅방 생성');
+        await handleManualPause(videoRef, videoUrl, videoId, chatRooms, setChatRooms, setCurrentChatRoomId);
+      }
+      pauseTimeout = null;
+    }, 300);
   };
 };
 
@@ -100,6 +167,11 @@ export const createVideoPauseHandler = (
 export const createVideoPlayHandler = (setIsPlaying) => {
   return () => {
     setIsPlaying(true);
+    // 재생 시 pending된 pause 처리 취소
+    if (pauseTimeout) {
+      clearTimeout(pauseTimeout);
+      pauseTimeout = null;
+    }
   };
 };
 

@@ -12,6 +12,8 @@ import {
   createUploadClickHandler,
   createVideoPauseHandler,
   createVideoPlayHandler,
+  createVideoSeekingHandler,
+  createVideoSeekedHandler,
 } from './utils/videoHandlers';
 import { createSendMessageHandler, createKeyPressHandler, createApiKeySubmitHandler } from './utils/messageHandlers';
 import { createSwitchChatRoomHandler, createDeleteChatRoomHandler } from './utils/chatRoomHandlers';
@@ -66,6 +68,9 @@ function App() {
     setShowChatRoomList
   );
 
+  const handleVideoSeeking = createVideoSeekingHandler();
+  const handleVideoSeeked = createVideoSeekedHandler();
+
   const handleSendMessage = createSendMessageHandler(
     inputMessage,
     setInputMessage,
@@ -109,6 +114,8 @@ function App() {
         onVideoToggle={handleVideoToggle}
         onVideoPlay={handleVideoPlay}
         onVideoPause={handleVideoPause}
+        onVideoSeeking={handleVideoSeeking}
+        onVideoSeeked={handleVideoSeeked}
         onFileUpload={handleFileUpload}
         onUploadClick={handleUploadClick}
       />
